@@ -192,7 +192,6 @@ For questions, support, or custom development:
 - **Documentation**: Check this README file
 - **Demo**: Open `index.html` in browser
 - **Issues**: Report bugs via GitHub issues
-- **Contact**: [Your Contact Information]
 
 ---
 
