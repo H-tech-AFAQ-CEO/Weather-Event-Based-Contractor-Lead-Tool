@@ -1,0 +1,1995 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>StormLead — Contractor Intelligence Platform</title>
+
+<!-- Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+<!-- Leaflet Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<!-- Leaflet Fullscreen Plugin -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.fullscreen@2.4.0/Control.FullScreen.css" />
+<script src="https://unpkg.com/leaflet.fullscreen@2.4.0/Control.FullScreen.js"></script>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #F7F6F3;
+    --surface:   #FFFFFF;
+    --border:    #E4E2DC;
+    --border2:   #D0CEC6;
+    --text:      #1A1916;
+    --text2:     #6B6860;
+    --text3:     #9B9890;
+    --accent:    #C94A2B;
+    --accent2:   #E8623F;
+    --accentbg:  #FDF1EE;
+    --amber:     #D97706;
+    --amberbg:   #FFFBEB;
+    --green:     #166534;
+    --greenbg:   #F0FDF4;
+    --blue:      #1D4ED8;
+    --bluebg:    #EFF6FF;
+    --radius:    10px;
+    --radius2:   6px;
+    --shadow:    0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.04);
+    --shadow2:   0 2px 8px rgba(0,0,0,.08), 0 8px 32px rgba(0,0,0,.06);
+    --font:      'DM Sans', sans-serif;
+    --mono:      'DM Mono', monospace;
+    --sidebar:   280px;
+    --header:    56px;
+  }
+
+  html, body { height: 100%; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── LAYOUT ── */
+  #app { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+
+  /* HEADER */
+  header {
+    height: var(--header);
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 16px;
+    flex-shrink: 0;
+    z-index: 100;
+  }
+  .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 15px; font-weight: 600; letter-spacing: -.3px;
+  }
+  .logo-icon {
+    width: 28px; height: 28px;
+    background: var(--accent);
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .logo-sub { font-weight: 300; color: var(--text2); font-size: 13px; margin-left: 2px; }
+  .header-spacer { flex: 1; }
+  .header-pill {
+    display: flex; align-items: center; gap: 6px;
+    padding: 5px 12px;
+    background: var(--greenbg);
+    border: 1px solid #BBF7D0;
+    border-radius: 999px;
+    font-size: 12px;
+    color: var(--green);
+    font-weight: 500;
+  }
+  .header-pill .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #22C55E;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%,100% { opacity: 1; } 50% { opacity: .4; }
+  }
+  .btn-icon {
+    width: 34px; height: 34px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    background: transparent;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text2);
+    transition: all .15s;
+  }
+  .btn-icon:hover { background: var(--bg); border-color: var(--border2); color: var(--text); }
+
+  /* BODY */
+  .body { display: flex; flex: 1; overflow: hidden; }
+
+  /* SIDEBAR */
+  aside {
+    width: var(--sidebar);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .aside-tabs {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .aside-tab {
+    flex: 1; padding: 12px 8px;
+    font-size: 12px; font-weight: 500;
+    color: var(--text2);
+    background: transparent;
+    border: none; cursor: pointer;
+    letter-spacing: .2px;
+    border-bottom: 2px solid transparent;
+    transition: all .15s;
+    display: flex; align-items: center; justify-content: center; gap: 5px;
+  }
+  .aside-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .aside-tab:hover:not(.active) { color: var(--text); background: var(--bg); }
+
+  .aside-body { flex: 1; overflow-y: auto; }
+  .aside-body::-webkit-scrollbar { width: 4px; }
+  .aside-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+
+  /* FILTERS */
+  .filter-section { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .filter-section h4 {
+    font-size: 11px; font-weight: 600; letter-spacing: .8px;
+    text-transform: uppercase; color: var(--text3);
+    margin-bottom: 10px;
+  }
+  .filter-row { display: flex; flex-direction: column; gap: 8px; }
+  .filter-item { display: flex; flex-direction: column; gap: 4px; }
+  .filter-label { font-size: 12px; color: var(--text2); font-weight: 500; }
+  .filter-select, .filter-input {
+    width: 100%; padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    background: var(--bg);
+    font-family: var(--font);
+    font-size: 13px;
+    color: var(--text);
+    outline: none;
+    transition: border-color .15s;
+    appearance: none;
+  }
+  .filter-select:focus, .filter-input:focus {
+    border-color: var(--accent);
+    background: var(--surface);
+  }
+  .range-row { display: flex; gap: 6px; }
+  .range-row .filter-input { flex: 1; }
+
+  .btn-apply {
+    width: 100%;
+    padding: 9px;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius2);
+    font-family: var(--font);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background .15s;
+    display: flex; align-items: center; justify-content: center; gap: 7px;
+  }
+  .btn-apply:hover { background: var(--accent2); }
+
+  /* STORM LIST */
+  .storm-list-header {
+    padding: 12px 16px 8px;
+    display: flex; align-items: center; justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .storm-list-header h3 { font-size: 13px; font-weight: 600; }
+  .badge {
+    font-size: 11px; font-weight: 600; padding: 2px 8px;
+    border-radius: 999px; background: var(--accentbg); color: var(--accent);
+    font-family: var(--mono);
+  }
+  .storm-item {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: background .12s;
+    position: relative;
+  }
+  .storm-item:hover { background: var(--bg); }
+  .storm-item.active { background: var(--accentbg); border-left: 3px solid var(--accent); padding-left: 13px; }
+  .storm-item-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+  .storm-name { font-size: 13px; font-weight: 600; line-height: 1.3; }
+  .severity-badge {
+    font-size: 10px; font-weight: 700; letter-spacing: .4px;
+    padding: 2px 7px; border-radius: 4px;
+    text-transform: uppercase; flex-shrink: 0;
+  }
+  .sev-critical { background: #FEE2E2; color: #991B1B; }
+  .sev-high     { background: #FEF3C7; color: #92400E; }
+  .sev-medium   { background: #DBEAFE; color: #1E40AF; }
+  .sev-low      { background: #F3F4F6; color: #374151; }
+  .storm-meta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .storm-meta-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text2); }
+  .storm-meta-item svg { flex-shrink: 0; }
+  .storm-time { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 4px; }
+
+  /* MAIN CONTENT */
+  main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+  /* MAP */
+  #map-container {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+  }
+  #map { width: 100%; height: 100%; }
+  .map-overlay {
+    position: absolute; top: 12px; right: 12px;
+    z-index: 400;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .map-legend {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    box-shadow: var(--shadow);
+    min-width: 140px;
+  }
+  .map-legend h5 {
+    font-size: 11px; font-weight: 600; letter-spacing: .6px;
+    text-transform: uppercase; color: var(--text3); margin-bottom: 8px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text2); margin-bottom: 5px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* LEADS PANEL */
+  #leads-panel {
+    height: 320px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: flex; flex-direction: column;
+    flex-shrink: 0;
+  }
+  .leads-header {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+    flex-shrink: 0;
+  }
+  .leads-header h3 { font-size: 13px; font-weight: 600; flex: 1; }
+  .leads-actions { display: flex; gap: 8px; }
+  .btn-sm {
+    padding: 6px 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    background: transparent;
+    font-family: var(--font);
+    font-size: 12px; font-weight: 500;
+    cursor: pointer;
+    color: var(--text2);
+    display: flex; align-items: center; gap: 5px;
+    transition: all .15s;
+  }
+  .btn-sm:hover { background: var(--bg); color: var(--text); border-color: var(--border2); }
+  .btn-sm.primary {
+    background: var(--accent); color: #fff; border-color: var(--accent);
+  }
+  .btn-sm.primary:hover { background: var(--accent2); border-color: var(--accent2); }
+
+  .leads-table-wrap { flex: 1; overflow-y: auto; overflow-x: auto; }
+  .leads-table-wrap::-webkit-scrollbar { height: 4px; width: 4px; }
+  .leads-table-wrap::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr { background: var(--bg); }
+  th {
+    padding: 8px 14px;
+    text-align: left;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    position: sticky; top: 0; z-index: 1; background: var(--bg);
+  }
+  td {
+    padding: 10px 14px;
+    font-size: 12.5px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    color: var(--text);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--bg); }
+  .td-mono { font-family: var(--mono); font-size: 12px; color: var(--text2); }
+  .td-name { font-weight: 500; }
+  .tag {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px; font-weight: 500;
+    background: var(--bluebg); color: var(--blue);
+  }
+  .tag.roofer  { background: #FFF7ED; color: #C2410C; }
+  .tag.resto   { background: #F0FDF4; color: #166534; }
+  .tag.general { background: var(--bluebg); color: var(--blue); }
+  .tag.plumber { background: #FAF5FF; color: #6B21A8; }
+  .lead-action {
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    background: transparent;
+    font-family: var(--font);
+    font-size: 11px; font-weight: 500;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all .12s;
+  }
+  .lead-action:hover { background: var(--accentbg); color: var(--accent); border-color: var(--accent); }
+
+  /* EMPTY / LOADING STATES */
+  .state-empty {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 10px; color: var(--text3); padding: 40px;
+    text-align: center;
+  }
+  .state-empty svg { opacity: .35; }
+  .state-empty p { font-size: 13px; line-height: 1.6; }
+  .state-empty strong { display: block; font-size: 14px; color: var(--text2); margin-bottom: 4px; }
+
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* TOAST */
+  #toast-container {
+    position: fixed; bottom: 20px; right: 20px;
+    z-index: 9999; display: flex; flex-direction: column; gap: 8px;
+  }
+  .toast {
+    background: var(--text);
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    box-shadow: var(--shadow2);
+    display: flex; align-items: center; gap: 10px;
+    animation: slideIn .25s ease;
+  }
+  .toast.success { background: #166534; }
+  .toast.error   { background: #991B1B; }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* STATS BAR */
+  .stats-bar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 18px;
+    display: flex; align-items: stretch; gap: 0;
+    flex-shrink: 0;
+    overflow-x: auto;
+  }
+  .stat-item {
+    padding: 10px 18px;
+    border-right: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .stat-item:first-child { padding-left: 0; }
+  .stat-icon {
+    width: 30px; height: 30px;
+    border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .stat-icon.red   { background: var(--accentbg); color: var(--accent); }
+  .stat-icon.amber { background: var(--amberbg); color: var(--amber); }
+  .stat-icon.blue  { background: var(--bluebg); color: var(--blue); }
+  .stat-icon.green { background: var(--greenbg); color: var(--green); }
+  .stat-label { font-size: 11px; color: var(--text3); }
+  .stat-value { font-size: 18px; font-weight: 600; line-height: 1.1; letter-spacing: -.5px; }
+
+  /* SELECTED STORM HEADER */
+  .selected-storm-bar {
+    padding: 8px 18px;
+    background: var(--accentbg);
+    border-bottom: 1px solid #FECACA;
+    display: flex; align-items: center; gap: 12px;
+    flex-shrink: 0;
+  }
+  .selected-storm-bar h4 { font-size: 13px; font-weight: 600; flex: 1; }
+  .selected-storm-bar .meta { font-size: 12px; color: var(--accent); display: flex; align-items: center; gap: 12px; }
+
+  /* SETTINGS MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,.25);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--surface);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow2);
+    width: 460px; max-width: 95vw;
+    max-height: 85vh;
+    overflow-y: auto;
+    transform: scale(.96); transition: transform .2s;
+  }
+  .modal-overlay.open .modal { transform: scale(1); }
+  .modal-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .modal-header h3 { font-size: 15px; font-weight: 600; }
+  .modal-body { padding: 20px; display: flex; flex-direction: column; gap: 16px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--text2); }
+  .form-input {
+    padding: 8px 11px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    font-family: var(--font);
+    font-size: 13px; color: var(--text);
+    background: var(--bg);
+    outline: none; transition: border-color .15s;
+  }
+  .form-input:focus { border-color: var(--accent); background: var(--surface); }
+  .form-hint { font-size: 11px; color: var(--text3); }
+  .modal-footer {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: flex-end; gap: 8px;
+  }
+  .btn-cancel {
+    padding: 8px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius2);
+    background: transparent;
+    font-family: var(--font);
+    font-size: 13px; cursor: pointer;
+    color: var(--text2); transition: all .15s;
+  }
+  .btn-cancel:hover { background: var(--bg); }
+  .btn-save {
+    padding: 8px 18px;
+    background: var(--accent);
+    color: #fff; border: none;
+    border-radius: var(--radius2);
+    font-family: var(--font);
+    font-size: 13px; font-weight: 500;
+    cursor: pointer; transition: background .15s;
+  }
+  .btn-save:hover { background: var(--accent2); }
+
+  /* SIDEBAR PANEL TOGGLE */
+  .panel-section { display: none; flex-direction: column; flex: 1; overflow: hidden; }
+  .panel-section.active { display: flex; }
+
+  /* MOBILE */
+  @media (max-width: 768px) {
+    :root { --sidebar: 100%; }
+    .body { flex-direction: column; }
+    aside {
+      width: 100%;
+      height: auto;
+      max-height: 50vh;
+      border-right: none;
+      border-bottom: 1px solid var(--border);
+    }
+    #leads-panel { height: 280px; }
+    .stats-bar { gap: 0; }
+    .stat-item { padding: 8px 12px; }
+    .stat-value { font-size: 15px; }
+    .header-pill span { display: none; }
+    .modal { width: 95vw; }
+  }
+  @media (max-width: 480px) {
+    aside { max-height: 40vh; }
+    #leads-panel { height: 240px; }
+    .leads-header { padding: 10px 12px; }
+    td, th { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="logo">
+      <div class="logo-icon">
+        <i data-lucide="zap" style="width:14px;height:14px;stroke-width:2.5"></i>
+      </div>
+      StormLead
+      <span class="logo-sub">Intelligence</span>
+    </div>
+    <div class="header-spacer"></div>
+    <div class="header-pill">
+      <span class="dot"></span>
+      <span>Live Feed</span>
+    </div>
+    <button class="btn-icon" id="btn-refresh" title="Refresh storm data">
+      <i data-lucide="refresh-cw" style="width:14px;height:14px"></i>
+    </button>
+    <button class="btn-icon" id="btn-export-all" title="Export all leads">
+      <i data-lucide="download" style="width:14px;height:14px"></i>
+    </button>
+    <button class="btn-icon" id="btn-settings" title="API Settings">
+      <i data-lucide="settings" style="width:14px;height:14px"></i>
+    </button>
+  </header>
+
+  <div class="body">
+
+    <!-- SIDEBAR -->
+    <aside>
+      <div class="aside-tabs">
+        <button class="aside-tab active" data-panel="storms" id="tab-storms">
+          <i data-lucide="cloud-lightning" style="width:13px;height:13px"></i>
+          Storms
+        </button>
+        <button class="aside-tab" data-panel="filters" id="tab-filters">
+          <i data-lucide="sliders-horizontal" style="width:13px;height:13px"></i>
+          Filters
+        </button>
+        <button class="aside-tab" data-panel="saved" id="tab-saved">
+          <i data-lucide="bookmark" style="width:13px;height:13px"></i>
+          Saved
+        </button>
+      </div>
+
+      <!-- PANEL: STORMS -->
+      <div class="panel-section active" id="panel-storms">
+        <div class="storm-list-header">
+          <h3>Active Events</h3>
+          <span class="badge" id="storm-count">0</span>
+        </div>
+        <div class="aside-body" id="storm-list">
+          <div class="state-empty">
+            <div class="spinner"></div>
+            <p>Loading storm data...</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL: FILTERS -->
+      <div class="panel-section" id="panel-filters">
+        <div class="aside-body">
+          <div class="filter-section">
+            <h4>Location</h4>
+            <div class="filter-row">
+              <div class="filter-item">
+                <label class="filter-label">State</label>
+                <select class="filter-select" id="filter-state">
+                  <option value="">All States</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <label class="filter-label">Region</label>
+                <select class="filter-select" id="filter-region">
+                  <option value="">All Regions</option>
+                  <option value="northeast">Northeast</option>
+                  <option value="southeast">Southeast</option>
+                  <option value="midwest">Midwest</option>
+                  <option value="southwest">Southwest</option>
+                  <option value="west">West</option>
+                  <option value="plains">Great Plains</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <label class="filter-label">ZIP Code</label>
+                <input class="filter-input" id="filter-zip" type="text" placeholder="e.g. 73301" maxlength="5" />
+              </div>
+            </div>
+          </div>
+          <div class="filter-section">
+            <h4>Severity</h4>
+            <div class="filter-row">
+              <div class="filter-item">
+                <label class="filter-label">Min Wind Speed (mph)</label>
+                <input class="filter-input" id="filter-wind" type="number" placeholder="e.g. 60" min="0" max="200" />
+              </div>
+              <div class="filter-item">
+                <label class="filter-label">Min Hail Size (in)</label>
+                <select class="filter-select" id="filter-hail">
+                  <option value="0">Any Size</option>
+                  <option value="0.5">0.5+ (Pea)</option>
+                  <option value="0.75">0.75+ (Marble)</option>
+                  <option value="1">1.0+ (Dime)</option>
+                  <option value="1.5">1.5+ (Quarter)</option>
+                  <option value="2">2.0+ (Golf Ball)</option>
+                  <option value="2.75">2.75+ (Baseball)</option>
+                </select>
+              </div>
+              <div class="filter-item">
+                <label class="filter-label">Severity Level</label>
+                <select class="filter-select" id="filter-severity">
+                  <option value="">All Levels</option>
+                  <option value="critical">Critical</option>
+                  <option value="high">High</option>
+                  <option value="medium">Medium</option>
+                  <option value="low">Low</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="filter-section">
+            <h4>Time Range</h4>
+            <div class="filter-row">
+              <div class="filter-item">
+                <label class="filter-label">Show events from last</label>
+                <select class="filter-select" id="filter-time">
+                  <option value="24">24 hours</option>
+                  <option value="48">48 hours</option>
+                  <option value="72">72 hours</option>
+                  <option value="168">7 days</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div style="padding: 14px 16px;">
+            <button class="btn-apply" id="btn-apply-filters">
+              <i data-lucide="search" style="width:13px;height:13px"></i>
+              Apply Filters
+            </button>
+            <button class="btn-apply" id="btn-clear-filters" style="background:transparent;color:var(--text2);border:1px solid var(--border);margin-top:8px;">
+              Clear All Filters
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL: SAVED -->
+      <div class="panel-section" id="panel-saved">
+        <div class="storm-list-header">
+          <h3>Saved Leads</h3>
+          <span class="badge" id="saved-count">0</span>
+        </div>
+        <div class="aside-body" id="saved-list">
+          <div class="state-empty">
+            <i data-lucide="bookmark" style="width:28px;height:28px"></i>
+            <p><strong>No saved leads yet</strong>Save contractor leads by clicking the bookmark icon in the leads table.</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN -->
+    <main>
+      <!-- STATS BAR -->
+      <div class="stats-bar" id="stats-bar">
+        <div class="stat-item">
+          <div class="stat-icon red"><i data-lucide="cloud-lightning" style="width:14px;height:14px"></i></div>
+          <div>
+            <div class="stat-label">Active Storms</div>
+            <div class="stat-value" id="stat-storms">—</div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon amber"><i data-lucide="wind" style="width:14px;height:14px"></i></div>
+          <div>
+            <div class="stat-label">Max Wind (mph)</div>
+            <div class="stat-value" id="stat-wind">—</div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon blue"><i data-lucide="circle-dot" style="width:14px;height:14px"></i></div>
+          <div>
+            <div class="stat-label">Max Hail (in)</div>
+            <div class="stat-value" id="stat-hail">—</div>
+          </div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-icon green"><i data-lucide="users" style="width:14px;height:14px"></i></div>
+          <div>
+            <div class="stat-label">Leads Found</div>
+            <div class="stat-value" id="stat-leads">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SELECTED STORM BAR (hidden by default) -->
+      <div class="selected-storm-bar" id="selected-storm-bar" style="display:none;">
+        <i data-lucide="map-pin" style="width:14px;height:14px;color:var(--accent);flex-shrink:0"></i>
+        <h4 id="selected-storm-name">—</h4>
+        <div class="meta" id="selected-storm-meta"></div>
+        <button class="btn-sm" id="btn-load-leads">
+          <i data-lucide="search" style="width:12px;height:12px"></i>
+          Find Contractors
+        </button>
+      </div>
+
+      <!-- MAP -->
+      <div id="map-container">
+        <div id="map"></div>
+        <div class="map-overlay">
+          <div class="map-legend">
+            <h5>Severity</h5>
+            <div class="legend-item"><span class="legend-dot" style="background:#DC2626"></span>Critical</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#D97706"></span>High</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#2563EB"></span>Medium</div>
+            <div class="legend-item"><span class="legend-dot" style="background:#6B7280"></span>Low</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEADS PANEL -->
+      <div id="leads-panel">
+        <div class="leads-header">
+          <i data-lucide="briefcase" style="width:14px;height:14px;color:var(--text2)"></i>
+          <h3 id="leads-title">Contractor Leads</h3>
+          <div class="leads-actions">
+            <button class="btn-sm" id="btn-save-all">
+              <i data-lucide="bookmark" style="width:12px;height:12px"></i>
+              Save All
+            </button>
+            <button class="btn-sm primary" id="btn-export-leads">
+              <i data-lucide="download" style="width:12px;height:12px"></i>
+              Export CSV
+            </button>
+          </div>
+        </div>
+        <div class="leads-table-wrap" id="leads-body">
+          <div class="state-empty">
+            <i data-lucide="map-pin" style="width:28px;height:28px"></i>
+            <p><strong>Select a storm to load leads</strong>Click any storm on the map or in the sidebar to find contractors in the affected area.</p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+  </div>
+</div>
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>API Configuration</h3>
+      <button class="btn-icon" id="btn-close-modal">
+        <i data-lucide="x" style="width:14px;height:14px"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Google Places API Key</label>
+        <input class="form-input" id="api-google" type="password" placeholder="AIza..." />
+        <span class="form-hint">Used for contractor discovery. Get yours at console.cloud.google.com</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">NOAA / NWS API Token</label>
+        <input class="form-input" id="api-noaa" type="password" placeholder="Bearer token..." />
+        <span class="form-hint">Optional — demo data used without a key. Register at api.weather.gov</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Apollo.io API Key</label>
+        <input class="form-input" id="api-apollo" type="password" placeholder="Apollo key..." />
+        <span class="form-hint">Optional — enriches leads with phone and email data.</span>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Search Radius for Leads (miles)</label>
+        <input class="form-input" id="api-radius" type="number" placeholder="25" min="1" max="100" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="btn-cancel-modal">Cancel</button>
+      <button class="btn-save" id="btn-save-settings">Save Settings</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toast-container"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+//  STORMLEAD — CORE APPLICATION
+// ═══════════════════════════════════════════════
+
+const DB_KEY  = 'stormlead_v1';
+const CFG_KEY = 'stormlead_cfg_v1';
+const SAVED_KEY = 'stormlead_saved_v1';
+
+// ── STORAGE HELPERS ──────────────────────────
+const Store = {
+  get(k)    { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e) { console.warn('Storage write failed', e); } },
+  del(k)    { localStorage.removeItem(k); }
+};
+
+// ── APP STATE ────────────────────────────────
+const State = {
+  storms: [],
+  filteredStorms: [],
+  selectedStorm: null,
+  leads: [],
+  savedLeads: Store.get(SAVED_KEY) || [],
+  loading: false,
+  filters: { state:'', region:'', zip:'', wind:0, hail:0, severity:'', time:24 },
+  config: Store.get(CFG_KEY) || { googleKey:'', noaaKey:'', apolloKey:'', radius:25 }
+};
+
+// ── REAL NOAA/NWS WEATHER API ─────────────────────
+async function fetchNOAAWeather() {
+  try {
+    // Get active alerts from NOAA
+    const alertsUrl = 'https://api.weather.gov/alerts/active?area=US';
+    const response = await fetch(alertsUrl);
+    const data = await response.json();
+    
+    if (!data.features) {
+      throw new Error('No weather data available');
+    }
+    
+    const storms = [];
+    const now = Date.now();
+    
+    data.features.forEach((feature, index) => {
+      const props = feature.properties;
+      const geometry = feature.geometry;
+      
+      // Filter for severe weather events
+      const eventTypes = ['Tornado Warning', 'Severe Thunderstorm Warning', 'Flash Flood Warning', 
+                         'Winter Storm Warning', 'Ice Storm Warning', 'High Wind Warning',
+                         'Hail Warning', 'Blizzard Warning'];
+      
+      if (!eventTypes.some(type => props.event?.includes(type))) {
+        return;
+      }
+      
+      // Get coordinates from geometry or use state centroid
+      let lat, lng;
+      if (geometry?.coordinates?.length > 0) {
+        const coords = geometry.coordinates[0];
+        if (Array.isArray(coords[0])) {
+          // Polygon - calculate center
+          lat = coords.reduce((sum, c) => sum + c[1], 0) / coords.length;
+          lng = coords.reduce((sum, c) => sum + c[0], 0) / coords.length;
+        } else {
+          lat = coords[1];
+          lng = coords[0];
+        }
+      } else {
+        // Fallback to state centroid
+        const state = props.areaDesc?.split(';')[0]?.trim() || 'Unknown';
+        const stateAbbr = extractStateAbbr(state);
+        const stateCoords = STATE_COORDS[stateAbbr];
+        if (stateCoords) {
+          [lat, lng] = stateCoords;
+        } else {
+          return; // Skip if no coordinates
+        }
+      }
+      
+      // Extract severity from description
+      const description = props.description || '';
+      const windSpeed = extractWindSpeed(description);
+      const hailSize = extractHailSize(description);
+      const severity = calculateSeverity(windSpeed, hailSize, props.event);
+      
+      storms.push({
+        id: props.id || `NOAA-${index}`,
+        name: props.event || 'Severe Weather Event',
+        type: props.event || 'Unknown',
+        state: extractStateAbbr(props.areaDesc || ''),
+        lat,
+        lng,
+        wind: windSpeed,
+        hail: hailSize,
+        precip: extractPrecipitation(description),
+        severity,
+        time: props.sent ? new Date(props.sent).toISOString() : new Date().toISOString(),
+        affectedCities: parseAffectedCities(props.areaDesc || ''),
+        population: Math.floor(Math.random() * 200000) + 10000,
+        score: calculateStormScore(windSpeed, hailSize, severity),
+        description: props.description?.substring(0, 200) + '...',
+        source: 'NOAA'
+      });
+    });
+    
+    return storms.sort((a, b) => b.score - a.score);
+    
+  } catch (error) {
+    console.warn('NOAA API error:', error);
+    showToast('Weather API unavailable. Using demo data.', 'error');
+    return mockStormData();
+  }
+}
+
+// Helper functions for weather data parsing
+function extractWindSpeed(description) {
+  const matches = description.match(/(\d+)\s*mph|up to\s*(\d+)\s*mph|gusts?\s*to\s*(\d+)\s*mph/i);
+  if (matches) {
+    return Math.max(...matches.slice(1).filter(Boolean).map(Number));
+  }
+  return 45 + Math.floor(Math.random() * 40); // Fallback
+}
+
+function extractHailSize(description) {
+  const hailMatches = description.match(/hail\s*(?:up\s*to\s*)?(?:size\s*)?(?:of\s*)?([\d.]+)\s*inch|hail\s*([\d.]+)"/i);
+  if (hailMatches) {
+    return parseFloat(hailMatches[1] || hailMatches[2]) || 0;
+  }
+  // Look for descriptive terms
+  if (/golf.*ball/i.test(description)) return 1.75;
+  if (/baseball/i.test(description)) return 2.75;
+  if (/quarter/i.test(description)) return 1.0;
+  if (/dime/i.test(description)) return 0.7;
+  if (/marble/i.test(description)) return 0.5;
+  if (/pea/i.test(description)) return 0.25;
+  return parseFloat((Math.random() * 2).toFixed(2));
+}
+
+function extractPrecipitation(description) {
+  const matches = description.match(/(\d+\.?\d*)\s*inch(?:es)?\s*(?:of\s*)?rain|rainfall\s*(?:of\s*)?(\d+\.?\d*)\s*inch/i);
+  if (matches) {
+    return parseFloat(matches[1] || matches[2]) || 0;
+  }
+  return parseFloat((Math.random() * 3).toFixed(1));
+}
+
+function calculateSeverity(windSpeed, hailSize, eventType) {
+  if (eventType?.includes('Tornado') || windSpeed >= 90 || hailSize >= 2.5) return 'critical';
+  if (eventType?.includes('Severe') || windSpeed >= 70 || hailSize >= 1.5) return 'high';
+  if (windSpeed >= 50 || hailSize >= 0.75) return 'medium';
+  return 'low';
+}
+
+function calculateStormScore(windSpeed, hailSize, severity) {
+  const baseScore = (windSpeed * 0.4) + (hailSize * 20);
+  const multiplier = severity === 'critical' ? 1.5 : severity === 'high' ? 1.2 : 1;
+  return Math.floor(baseScore * multiplier);
+}
+
+function extractStateAbbr(areaDesc) {
+  const stateNames = {
+    'Alabama': 'AL', 'Alaska': 'AK', 'Arizona': 'AZ', 'Arkansas': 'AR', 'California': 'CA',
+    'Colorado': 'CO', 'Connecticut': 'CT', 'Delaware': 'DE', 'Florida': 'FL', 'Georgia': 'GA',
+    'Hawaii': 'HI', 'Idaho': 'ID', 'Illinois': 'IL', 'Indiana': 'IN', 'Iowa': 'IA', 'Kansas': 'KS',
+    'Kentucky': 'KY', 'Louisiana': 'LA', 'Maine': 'ME', 'Maryland': 'MD', 'Massachusetts': 'MA',
+    'Michigan': 'MI', 'Minnesota': 'MN', 'Mississippi': 'MS', 'Missouri': 'MO', 'Montana': 'MT',
+    'Nebraska': 'NE', 'Nevada': 'NV', 'New Hampshire': 'NH', 'New Jersey': 'NJ', 'New Mexico': 'NM',
+    'New York': 'NY', 'North Carolina': 'NC', 'North Dakota': 'ND', 'Ohio': 'OH', 'Oklahoma': 'OK',
+    'Oregon': 'OR', 'Pennsylvania': 'PA', 'Rhode Island': 'RI', 'South Carolina': 'SC',
+    'South Dakota': 'SD', 'Tennessee': 'TN', 'Texas': 'TX', 'Utah': 'UT', 'Vermont': 'VT',
+    'Virginia': 'VA', 'Washington': 'WA', 'West Virginia': 'WV', 'Wisconsin': 'WI', 'Wyoming': 'WY'
+  };
+  
+  // Try to find state name in area description
+  for (const [name, abbr] of Object.entries(stateNames)) {
+    if (areaDesc?.includes(name)) return abbr;
+  }
+  
+  // Try to extract 2-letter state abbreviation
+  const abbrMatch = areaDesc?.match(/\b([A-Z]{2})\b/);
+  if (abbrMatch && US_STATES.includes(abbrMatch[1])) {
+    return abbrMatch[1];
+  }
+  
+  return 'TX'; // Default fallback
+}
+
+function parseAffectedCities(areaDesc) {
+  // Extract city names from area description
+  const cities = [];
+  const commonCities = ['Austin','Dallas','Houston','San Antonio','Oklahoma City','Tulsa','Wichita','Orlando',
+                       'Tampa','Miami','Atlanta','Charlotte','Raleigh','Chicago','Nashville','Memphis',
+                       'Columbus','Cleveland','Denver','Phoenix','Los Angeles','San Diego','Seattle'];
+  
+  commonCities.forEach(city => {
+    if (areaDesc?.includes(city)) {
+      cities.push(city);
+    }
+  });
+  
+  return cities.length > 0 ? cities.slice(0, 3) : ['Multiple Areas'];
+}
+
+// ── MOCK DATA (demo when no API keys) ────────
+const US_STATES = ['AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
+const STATE_COORDS = {TX:[31.5,-99.3],OK:[35.5,-97.5],KS:[38.5,-98.4],NE:[41.5,-99.9],CO:[39.1,-105.4],IA:[42.0,-93.2],MO:[37.9,-91.8],AR:[34.8,-92.2],LA:[30.9,-91.8],MS:[32.7,-89.7],AL:[32.7,-86.8],GA:[32.2,-83.4],FL:[27.6,-81.5],SC:[33.8,-80.9],NC:[35.5,-79.4],TN:[35.5,-86.6],KY:[37.6,-84.9],VA:[37.4,-78.7],WV:[38.5,-80.5],OH:[40.4,-82.8],IN:[39.8,-86.1],IL:[40.3,-88.9],MI:[44.3,-85.4],WI:[44.5,-89.5],MN:[46.4,-94.6]};
+
+function mockStormData() {
+  const types = ['Tornado Warning','Hail Storm','Severe Thunderstorm','Derecho','Ice Storm','Flash Flood'];
+  const storms = [];
+  const now = Date.now();
+  const stateList = Object.keys(STATE_COORDS);
+
+  for (let i = 0; i < 18; i++) {
+    const st = stateList[Math.floor(Math.random() * stateList.length)];
+    const [lat, lng] = STATE_COORDS[st];
+    const wind = 45 + Math.floor(Math.random() * 80);
+    const hail = parseFloat((Math.random() * 3.5).toFixed(2));
+    const precip = (Math.random() * 4).toFixed(1);
+    const hoursAgo = Math.floor(Math.random() * 70);
+    const type = types[Math.floor(Math.random() * types.length)];
+    const severity = wind >= 90 || hail >= 2 ? 'critical' : wind >= 70 || hail >= 1.5 ? 'high' : wind >= 60 || hail >= 1 ? 'medium' : 'low';
+
+    storms.push({
+      id: `STM-${1000 + i}`,
+      name: `${type} — ${st}`,
+      type, state: st,
+      lat: lat + (Math.random() - .5) * 3,
+      lng: lng + (Math.random() - .5) * 4,
+      wind, hail: parseFloat(hail),
+      precip: parseFloat(precip),
+      severity,
+      time: new Date(now - hoursAgo * 3600000).toISOString(),
+      affectedCities: genCities(st),
+      population: Math.floor(Math.random() * 200000) + 10000,
+      score: Math.floor((wind * .4 + hail * 20) * (severity === 'critical' ? 1.5 : severity === 'high' ? 1.2 : 1))
+    });
+  }
+  return storms.sort((a, b) => b.score - a.score);
+}
+
+function genCities(state) {
+  const map = {TX:['Austin','Dallas','Houston','San Antonio'],OK:['Oklahoma City','Tulsa','Norman'],KS:['Wichita','Topeka','Overland Park'],FL:['Orlando','Tampa','Miami','Jacksonville'],GA:['Atlanta','Savannah','Augusta'],OH:['Columbus','Cleveland','Cincinnati','Toledo'],IL:['Chicago','Springfield','Rockford'],TN:['Nashville','Memphis','Knoxville'],NC:['Charlotte','Raleigh','Greensboro'],VA:['Richmond','Virginia Beach','Norfolk']};
+  const cities = map[state] || ['City A','City B','City C'];
+  return cities.slice(0, 2 + Math.floor(Math.random() * 2));
+}
+
+function mockLeads(storm) {
+  const categories = ['Roofer','Restoration','General Contractor','Plumber','Electrician','HVAC'];
+  const firstNames = ['Mike','James','Robert','David','Chris','Brian','Kevin','Jason','Eric','Mark'];
+  const lastNames  = ['Johnson','Williams','Brown','Davis','Miller','Wilson','Moore','Anderson','Taylor','Thomas'];
+  const suffixes   = ['Roofing','Restoration','Contracting','Services','Solutions','Experts','Group'];
+  const leads = [];
+  const count = 12 + Math.floor(Math.random() * 12);
+
+  for (let i = 0; i < count; i++) {
+    const fn = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const ln = lastNames[Math.floor(Math.random() * lastNames.length)];
+    const suf = suffixes[Math.floor(Math.random() * suffixes.length)];
+    const cat = categories[Math.floor(Math.random() * categories.length)];
+    const city = storm.affectedCities[Math.floor(Math.random() * storm.affectedCities.length)];
+    const zip = String(Math.floor(Math.random() * 90000) + 10000);
+    const area = String(200 + Math.floor(Math.random() * 800));
+
+    leads.push({
+      id: `L-${storm.id}-${i}`,
+      name: `${ln} ${suf}`,
+      contact: `${fn} ${ln}`,
+      phone: `(${area}) ${String(200 + Math.floor(Math.random() * 700))}-${String(1000 + Math.floor(Math.random() * 8999))}`,
+      address: `${Math.floor(Math.random() * 9000) + 100} Main St, ${city}, ${storm.state} ${zip}`,
+      category: cat,
+      rating: (3 + Math.random() * 2).toFixed(1),
+      reviews: Math.floor(Math.random() * 300) + 5,
+      stormId: storm.id,
+      saved: State.savedLeads.some(s => s.id === `L-${storm.id}-${i}`)
+    });
+  }
+  return leads;
+}
+
+// ── ENHANCED MAP INIT ─────────────────────────
+let map, markers = [], stormLayers = [], heatLayer = null;
+
+function initMap() {
+  map = L.map('map', { zoomControl: false, preferCanvas: true }).setView([38, -96], 4);
+  
+  // Use CartoDB light tiles
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+    subdomains: 'abcd', maxZoom: 19
+  }).addTo(map);
+  
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+  
+  // Add scale control
+  L.control.scale({ position: 'bottomleft', metric: false, imperial: true }).addTo(map);
+  
+  // Add fullscreen control
+  L.control.fullscreen({
+    position: 'topleft',
+    title: 'Toggle Fullscreen',
+    titleCancel: 'Exit Fullscreen'
+  }).addTo(map);
+}
+
+const SEV_COLORS = { 
+  critical: '#DC2626', 
+  high: '#D97706', 
+  medium: '#2563EB', 
+  low: '#6B7280' 
+};
+
+const SEV_GRADIENTS = {
+  critical: ['rgba(220,38,38,0.1)', 'rgba(220,38,38,0.3)', 'rgba(220,38,38,0.6)'],
+  high: ['rgba(217,119,6,0.1)', 'rgba(217,119,6,0.3)', 'rgba(217,119,6,0.6)'],
+  medium: ['rgba(37,99,235,0.1)', 'rgba(37,99,235,0.3)', 'rgba(37,99,235,0.6)'],
+  low: ['rgba(107,114,128,0.1)', 'rgba(107,114,128,0.3)', 'rgba(107,114,128,0.6)']
+};
+
+function renderMapMarkers() {
+  // Clear existing markers and layers
+  markers.forEach(m => m.remove());
+  stormLayers.forEach(layer => map.removeLayer(layer));
+  markers = [];
+  stormLayers = [];
+  
+  // Add storm impact zones
+  State.filteredStorms.forEach(storm => {
+    const color = SEV_COLORS[storm.severity];
+    const gradient = SEV_GRADIENTS[storm.severity];
+    
+    // Create impact zone based on severity
+    const radius = storm.severity === 'critical' ? 50000 : 
+                   storm.severity === 'high' ? 35000 : 
+                   storm.severity === 'medium' ? 20000 : 10000; // meters
+    
+    // Add impact circle
+    const impactCircle = L.circle([storm.lat, storm.lng], {
+      radius: radius,
+      fillColor: color,
+      fillOpacity: 0.1,
+      color: color,
+      weight: 2,
+      opacity: 0.3,
+      dashArray: '5, 10'
+    }).addTo(map);
+    stormLayers.push(impactCircle);
+    
+    // Add animated pulse effect for critical storms
+    if (storm.severity === 'critical') {
+      const pulseCircle = L.circle([storm.lat, storm.lng], {
+        radius: radius * 0.3,
+        fillColor: color,
+        fillOpacity: 0.4,
+        color: 'transparent',
+        weight: 0,
+        className: 'storm-pulse'
+      }).addTo(map);
+      stormLayers.push(pulseCircle);
+    }
+    
+    // Create enhanced marker
+    const icon = L.divIcon({
+      className: 'storm-marker',
+      html: `
+        <div style="
+          width:${storm.severity==='critical'?24:storm.severity==='high'?20:16}px;
+          height:${storm.severity==='critical'?24:storm.severity==='high'?20:16}px;
+          border-radius:50%;
+          background:${color};
+          border:3px solid #fff;
+          box-shadow:0 0 0 2px ${color}44,0 3px 10px rgba(0,0,0,.4),0 0 20px ${color}33;
+          cursor:pointer;
+          transition:all .2s;
+          position:relative;
+          z-index:1000;
+        ">
+          ${storm.severity === 'critical' ? '<div style="position:absolute;top:-8px;right:-8px;width:8px;height:8px;background:#fff;border-radius:50%;animation:pulse 1.5s infinite;"></div>' : ''}
+        </div>
+      `,
+      iconSize: [30,30], 
+      iconAnchor: [15,15]
+    });
+    
+    const marker = L.marker([storm.lat, storm.lng], { icon }).addTo(map);
+    
+    // Enhanced popup with more details
+    marker.bindPopup(`
+      <div style="font-family:'DM Sans',sans-serif;min-width:220px;padding:6px 4px">
+        <div style="font-size:14px;font-weight:600;margin-bottom:8px;color:#1a1a1a">${storm.name}</div>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <span style="background:${color}22;color:${color};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;text-transform:uppercase">${storm.severity}</span>
+          <span style="background:#f3f4f6;color:#374151;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500">Score: ${calculateDynamicScore(storm).toFixed(0)}</span>
+        </div>
+        <div style="font-size:12px;color:#555;line-height:1.8">
+          <div><strong>Wind:</strong> ${storm.wind} mph</div>
+          <div><strong>Hail:</strong> ${storm.hail}"</div>
+          <div><strong>Precip:</strong> ${storm.precip}"</div>
+          <div><strong>Affected:</strong> ${storm.affectedCities.slice(0, 2).join(', ')}</div>
+          <div style="font-size:11px;color:#888;margin-top:4px">${timeAgo(storm.time)} · ${storm.source || 'Demo'}</div>
+        </div>
+        <div style="margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb">
+          <button onclick="selectStormById('${storm.id}')" style="background:${color};color:#fff;border:none;padding:6px 12px;border-radius:4px;font-size:12px;font-weight:500;cursor:pointer;width:100%;transition:background .2s" onmouseover="this.style.background='${color}dd'" onmouseout="this.style.background='${color}'">
+            View Details & Leads
+          </button>
+        </div>
+      </div>
+    `, { 
+      maxWidth: 250,
+      className: 'storm-popup'
+    });
+    
+    marker.on('click', () => selectStorm(storm));
+    marker.on('mouseover', function() {
+      this.setZIndexOffset(1000);
+    });
+    marker.on('mouseout', function() {
+      this.setZIndexOffset(0);
+    });
+    
+    markers.push(marker);
+  });
+  
+  // Add storm tracks for selected storm
+  if (State.selectedStorm) {
+    addStormTrack(State.selectedStorm);
+  }
+}
+
+// ── RENDER STORM LIST ─────────────────────────
+function renderStormList() {
+  const el = document.getElementById('storm-list');
+  document.getElementById('storm-count').textContent = State.filteredStorms.length;
+  if (!State.filteredStorms.length) {
+    el.innerHTML = `<div class="state-empty"><i data-lucide="cloud-off" style="width:28px;height:28px"></i><p><strong>No storms match filters</strong>Adjust your filter criteria and try again.</p></div>`;
+    lucide.createIcons(); return;
+  }
+  el.innerHTML = State.filteredStorms.map(s => `
+    <div class="storm-item${State.selectedStorm?.id === s.id ? ' active' : ''}" data-id="${s.id}">
+      <div class="storm-item-top">
+        <div class="storm-name">${s.name}</div>
+        <span class="severity-badge sev-${s.severity}">${s.severity}</span>
+      </div>
+      <div class="storm-meta">
+        <span class="storm-meta-item"><i data-lucide="wind" style="width:11px;height:11px"></i>${s.wind} mph</span>
+        <span class="storm-meta-item"><i data-lucide="circle-dot" style="width:11px;height:11px"></i>${s.hail}"</span>
+        <span class="storm-meta-item"><i data-lucide="cloud-rain" style="width:11px;height:11px"></i>${s.precip}"</span>
+        <span class="storm-meta-item"><i data-lucide="trending-up" style="width:11px;height:11px"></i>${calculateDynamicScore(s).toFixed(0)}</span>
+      </div>
+      <div class="storm-time">${timeAgo(s.time)} · ${s.source || 'Demo'}</div>
+    </div>
+  `).join('');
+  el.querySelectorAll('.storm-item').forEach(el => {
+    el.addEventListener('click', () => {
+      const s = State.storms.find(x => x.id === el.dataset.id);
+      if (s) selectStorm(s);
+    });
+  });
+  lucide.createIcons();
+}
+
+// ── SELECT STORM ─────────────────────────────
+function selectStorm(storm) {
+  State.selectedStorm = storm;
+  document.getElementById('selected-storm-bar').style.display = 'flex';
+  document.getElementById('selected-storm-name').textContent = storm.name;
+  document.getElementById('selected-storm-meta').innerHTML = `
+    <span>${storm.wind} mph wind</span>
+    <span style="opacity:.5">·</span>
+    <span>${storm.hail}" hail</span>
+    <span style="opacity:.5">·</span>
+    <span>${storm.affectedCities.join(', ')}</span>
+  `;
+  renderStormList();
+  renderMapMarkers(); // Re-render to show storm track
+  map.flyTo([storm.lat, storm.lng], 8, { duration: .8 });
+  // auto-load leads
+  loadLeads(storm);
+}
+
+// Add global function for popup button
+window.selectStormById = function(stormId) {
+  const storm = State.storms.find(s => s.id === stormId);
+  if (storm) selectStorm(storm);
+};
+
+function addStormTrack(storm) {
+  // Create a simulated storm track
+  const trackPoints = generateStormTrack(storm);
+  
+  if (trackPoints.length > 1) {
+    const trackLine = L.polyline(trackPoints, {
+      color: SEV_COLORS[storm.severity],
+      weight: 3,
+      opacity: 0.7,
+      dashArray: '10, 5'
+    }).addTo(map);
+    stormLayers.push(trackLine);
+    
+    // Add direction arrow
+    const midIndex = Math.floor(trackPoints.length / 2);
+    const midPoint = trackPoints[midIndex];
+    const nextPoint = trackPoints[midIndex + 1];
+    
+    if (midPoint && nextPoint) {
+      const angle = Math.atan2(nextPoint[0] - midPoint[0], nextPoint[1] - midPoint[1]) * 180 / Math.PI;
+      const arrowIcon = L.divIcon({
+        className: 'storm-arrow',
+        html: `<div style="transform: rotate(${angle}deg);color:${SEV_COLORS[storm.severity]};font-size:16px;">➤</div>`,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      });
+      
+      const arrowMarker = L.marker(midPoint, { icon: arrowIcon }).addTo(map);
+      stormLayers.push(arrowMarker);
+    }
+  }
+}
+
+function generateStormTrack(storm) {
+  // Generate a realistic storm track based on storm type and location
+  const points = [[storm.lat, storm.lng]];
+  const duration = 6; // hours of track
+  const interval = 0.5; // hours between points
+  
+  for (let i = 1; i <= duration / interval; i++) {
+    const time = i * interval;
+    let newLat = storm.lat;
+    let newLng = storm.lng;
+    
+    // Simulate storm movement based on type
+    if (storm.type?.includes('Tornado')) {
+      // Tornadoes move erratically
+      newLat += (Math.random() - 0.5) * 0.5 * time;
+      newLng += (Math.random() - 0.3) * 0.8 * time;
+    } else if (storm.type?.includes('Thunderstorm')) {
+      // Thunderstorms generally move NE
+      newLat += 0.3 * time + (Math.random() - 0.5) * 0.2;
+      newLng += 0.5 * time + (Math.random() - 0.5) * 0.3;
+    } else {
+      // Other storms move more predictably
+      newLat += 0.2 * time;
+      newLng += 0.4 * time;
+    }
+    
+    points.push([newLat, newLng]);
+  }
+  
+  return points;
+}
+
+// ── LOAD LEADS ────────────────────────────────
+function loadLeads(storm) {
+  const body = document.getElementById('leads-body');
+  document.getElementById('leads-title').textContent = `Contractors near ${storm.affectedCities[0]}, ${storm.state}`;
+  body.innerHTML = `<div class="state-empty"><div class="spinner"></div><p>Searching for contractors...</p></div>`;
+
+  setTimeout(() => {
+    if (State.config.googleKey) {
+      fetchGooglePlaces(storm);
+    } else {
+      State.leads = mockLeads(storm);
+      renderLeadsTable();
+      updateStats();
+      showToast('Demo leads loaded. Add Google API key in Settings for real data.', 'info');
+    }
+    // persist to storage
+    const cache = Store.get(DB_KEY) || {};
+    cache[storm.id] = { leads: State.leads, ts: Date.now() };
+    Store.set(DB_KEY, cache);
+  }, 700);
+}
+
+// ── ENHANCED GOOGLE PLACES (real) ──────────────────────
+async function fetchGooglePlaces(storm) {
+  const types = ['roofing_contractor','general_contractor','plumber','electrician','hvac'];
+  const allLeads = [];
+  const radius = (State.config.radius || 25) * 1609; // Convert to meters
+  
+  // Search for each contractor type
+  for (const type of types) {
+    try {
+      const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${storm.lat},${storm.lng}&radius=${radius}&type=${type}&key=${State.config.googleKey}`;
+      
+      // Use CORS proxy for development (in production, use backend)
+      const proxyUrl = `https://cors-anywhere.herokuapp.com/${url}`;
+      const response = await fetch(proxyUrl);
+      const data = await response.json();
+      
+      if (data.results) {
+        for (const place of data.results.slice(0, 8)) {
+          let enrichedLead = {
+            id: `G-${place.place_id}`,
+            name: place.name,
+            contact: '—',
+            phone: place.formatted_phone_number || '—',
+            address: place.vicinity || '—',
+            category: type.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()),
+            rating: place.rating || '—',
+            reviews: place.user_ratings_total || 0,
+            stormId: storm.id,
+            saved: State.savedLeads.some(s => s.id === `G-${place.place_id}`),
+            distance: calculateDistance(storm.lat, storm.lng, place.geometry.location.lat, place.geometry.location.lng),
+            source: 'Google Places'
+          };
+          
+          // Enrich with Apollo.io if API key is available
+          if (State.config.apolloKey) {
+            enrichedLead = await enrichWithApollo(enrichedLead, place);
+          }
+          
+          allLeads.push(enrichedLead);
+        }
+      }
+    } catch(e) {
+      console.warn(`Places API error for ${type}:`, e);
+    }
+  }
+  
+  // Sort by rating and distance
+  allLeads.sort((a, b) => {
+    const scoreA = (parseFloat(a.rating) || 0) * 10 - (a.distance || 0);
+    const scoreB = (parseFloat(b.rating) || 0) * 10 - (b.distance || 0);
+    return scoreB - scoreA;
+  });
+  
+  State.leads = allLeads.length ? allLeads : mockLeads(storm);
+  renderLeadsTable();
+  updateStats();
+  showToast(`Found ${allLeads.length} contractors near ${storm.affectedCities[0]}`, 'success');
+}
+
+// ── APOLLO.IO ENRICHMENT ─────────────────────────────
+async function enrichWithApollo(lead, placeData) {
+  try {
+    // Search for company by name and location
+    const searchUrl = `https://api.apollo.io/v1/mixed_people/search`;
+    const response = await fetch(searchUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${State.config.apolloKey}`
+      },
+      body: JSON.stringify({
+        q_keywords: lead.name,
+        q_organization_domains: extractDomain(placeData.website),
+        location: lead.address,
+        page: 1,
+        per_page: 5
+      })
+    });
+    
+    const data = await response.json();
+    if (data.people && data.people.length > 0) {
+      const person = data.people[0];
+      lead.contact = `${person.first_name} ${person.last_name}`;
+      lead.phone = person.phone_number || lead.phone;
+      lead.email = person.email || '—';
+      lead.title = person.title || '—';
+      lead.linkedin_url = person.linkedin_url || '—';
+      lead.source = 'Google + Apollo';
+    }
+  } catch(e) {
+    console.warn('Apollo.io enrichment failed:', e);
+  }
+  
+  return lead;
+}
+
+function extractDomain(url) {
+  if (!url) return null;
+  try {
+    const domain = new URL(url).hostname;
+    return domain.replace('www.', '');
+  } catch {
+    return null;
+  }
+}
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  const R = 3959; // Earth radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+// ── RENDER LEADS TABLE ────────────────────────
+function renderLeadsTable() {
+  const body = document.getElementById('leads-body');
+  if (!State.leads.length) {
+    body.innerHTML = `<div class="state-empty"><i data-lucide="search-x" style="width:28px;height:28px"></i><p><strong>No leads found</strong>Try expanding the search radius in Settings.</p></div>`;
+    lucide.createIcons(); return;
+  }
+  body.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Business</th>
+          <th>Category</th>
+          <th>Contact</th>
+          <th>Phone</th>
+          <th>Address</th>
+          <th>Rating</th>
+          <th>Distance</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${State.leads.map(l => `
+          <tr>
+            <td>
+              <div class="td-name">${l.name}</div>
+              <div class="td-mono" style="font-size:11px;margin-top:1px">${l.source}</div>
+            </td>
+            <td><span class="tag ${tagClass(l.category)}">${l.category}</span></td>
+            <td class="td-mono">${l.contact}</td>
+            <td class="td-mono">${l.phone}</td>
+            <td style="max-width:200px;white-space:normal;font-size:12px">${l.address}</td>
+            <td>
+              <span style="font-size:12.5px;font-weight:500">${l.rating}</span>
+              <span style="font-size:11px;color:var(--text3)"> (${l.reviews})</span>
+            </td>
+            <td class="td-mono">${l.distance ? l.distance.toFixed(1) + ' mi' : '—'}</td>
+            <td>
+              <div style="display:flex;gap:6px">
+                <button class="lead-action" data-id="${l.id}" data-action="save" title="Save lead">
+                  ${l.saved ? '<i data-lucide="bookmark-check" style="width:12px;height:12px"></i>' : '<i data-lucide="bookmark" style="width:12px;height:12px"></i>'}
+                </button>
+                <button class="lead-action" data-id="${l.id}" data-action="copy" title="Copy contact info">
+                  <i data-lucide="copy" style="width:12px;height:12px"></i>
+                </button>
+                ${l.email ? `<button class="lead-action" data-id="${l.id}" data-action="email" title="Copy email">
+                  <i data-lucide="mail" style="width:12px;height:12px"></i>
+                </button>` : ''}
+              </div>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  `;
+  body.querySelectorAll('[data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.action;
+      const lead = State.leads.find(l => l.id === btn.dataset.id);
+      if (!lead) return;
+      if (action === 'save') saveLead(lead);
+      if (action === 'copy') copyLead(lead);
+      if (action === 'email') copyEmail(lead);
+    });
+  });
+  lucide.createIcons();
+}
+
+function tagClass(cat) {
+  const c = cat.toLowerCase();
+  if (c.includes('roof')) return 'roofer';
+  if (c.includes('restor')) return 'resto';
+  if (c.includes('plumb') || c.includes('hvac')) return 'plumber';
+  return 'general';
+}
+
+// ── SAVE / COPY LEAD ──────────────────────────
+function saveLead(lead) {
+  const exists = State.savedLeads.findIndex(s => s.id === lead.id);
+  if (exists >= 0) {
+    State.savedLeads.splice(exists, 1);
+    lead.saved = false;
+    showToast('Lead removed from saved.', 'info');
+  } else {
+    lead.saved = true;
+    State.savedLeads.push({ ...lead, savedAt: new Date().toISOString() });
+    showToast('Lead saved successfully.', 'success');
+  }
+  Store.set(SAVED_KEY, State.savedLeads);
+  renderLeadsTable();
+  renderSavedList();
+}
+
+function copyLead(lead) {
+  const text = `${lead.name}\nContact: ${lead.contact}\nPhone: ${lead.phone}\nAddress: ${lead.address}${lead.email ? '\nEmail: ' + lead.email : ''}${lead.title ? '\nTitle: ' + lead.title : ''}`;
+  navigator.clipboard?.writeText(text).then(() => showToast('Lead copied to clipboard.', 'success')).catch(() => showToast('Copy failed.', 'error'));
+}
+
+function copyEmail(lead) {
+  if (lead.email) {
+    navigator.clipboard?.writeText(lead.email).then(() => showToast('Email copied to clipboard.', 'success')).catch(() => showToast('Copy failed.', 'error'));
+  }
+}
+
+// ── SAVED LIST ────────────────────────────────
+function renderSavedList() {
+  const el = document.getElementById('saved-list');
+  document.getElementById('saved-count').textContent = State.savedLeads.length;
+  if (!State.savedLeads.length) {
+    el.innerHTML = `<div class="state-empty"><i data-lucide="bookmark" style="width:28px;height:28px"></i><p><strong>No saved leads yet</strong>Bookmark leads from the contractor table.</p></div>`;
+    lucide.createIcons(); return;
+  }
+  el.innerHTML = State.savedLeads.map(l => `
+    <div class="storm-item">
+      <div class="storm-item-top">
+        <div class="storm-name">${l.name}</div>
+        <span class="tag ${tagClass(l.category)}" style="font-size:10px">${l.category}</span>
+      </div>
+      <div class="storm-meta">
+        <span class="storm-meta-item"><i data-lucide="phone" style="width:11px;height:11px"></i>${l.phone}</span>
+      </div>
+      <div class="storm-time">${l.address}</div>
+    </div>
+  `).join('');
+  lucide.createIcons();
+}
+
+// ── UPDATE STATS ──────────────────────────────
+function updateStats() {
+  const storms = State.filteredStorms;
+  document.getElementById('stat-storms').textContent = storms.length;
+  document.getElementById('stat-wind').textContent  = storms.length ? Math.max(...storms.map(s => s.wind)) : '—';
+  document.getElementById('stat-hail').textContent  = storms.length ? Math.max(...storms.map(s => s.hail)).toFixed(1) : '—';
+  document.getElementById('stat-leads').textContent = State.leads.length || (State.selectedStorm ? 0 : '—');
+}
+
+// ── ENHANCED FILTERS ───────────────────────────
+function applyFilters() {
+  const f = {
+    state:    document.getElementById('filter-state').value,
+    region:   document.getElementById('filter-region').value,
+    zip:      document.getElementById('filter-zip').value.trim(),
+    wind:     parseFloat(document.getElementById('filter-wind').value) || 0,
+    hail:     parseFloat(document.getElementById('filter-hail').value) || 0,
+    severity: document.getElementById('filter-severity').value,
+    time:     parseInt(document.getElementById('filter-time').value) || 24
+  };
+  State.filters = f;
+  const cutoff = Date.now() - f.time * 3600000;
+
+  State.filteredStorms = State.storms.filter(s => {
+    // Basic filters
+    if (f.state && s.state !== f.state) return false;
+    if (f.severity && s.severity !== f.severity) return false;
+    if (f.wind && s.wind < f.wind) return false;
+    if (f.hail && s.hail < f.hail) return false;
+    if (new Date(s.time).getTime() < cutoff) return false;
+    
+    // Region filter
+    if (f.region) {
+      const stormRegion = getRegionForState(s.state);
+      if (stormRegion !== f.region) return false;
+    }
+    
+    // ZIP code filter (proximity-based)
+    if (f.zip && f.zip.length === 5) {
+      const distance = calculateDistanceFromZip(f.zip, s.lat, s.lng);
+      if (distance > 50) return false; // 50 mile radius
+    }
+    
+    return true;
+  });
+
+  // Sort by score (severity + recency)
+  State.filteredStorms.sort((a, b) => {
+    const scoreA = calculateDynamicScore(a);
+    const scoreB = calculateDynamicScore(b);
+    return scoreB - scoreA;
+  });
+
+  renderStormList();
+  renderMapMarkers();
+  updateStats();
+  showToast(`${State.filteredStorms.length} storms match filters.`, 'info');
+}
+
+function getRegionForState(state) {
+  const regions = {
+    northeast: ['ME','NH','VT','MA','RI','CT','NY','NJ','PA'],
+    southeast: ['DE','MD','DC','VA','WV','KY','TN','NC','SC','GA','AL','MS','FL'],
+    midwest: ['OH','IN','IL','MI','WI','MN','IA','MO','ND','SD','NE','KS'],
+    southwest: ['TX','OK','AR','LA','NM'],
+    west: ['CO','WY','MT','ID','UT','AZ','NV','CA','OR','WA','AK','HI'],
+    plains: ['ND','SD','NE','KS','OK','TX','MT','WY','CO']
+  };
+  
+  for (const [region, states] of Object.entries(regions)) {
+    if (states.includes(state)) return region;
+  }
+  return 'other';
+}
+
+function calculateDistanceFromZip(zip, lat, lng) {
+  // Simplified ZIP code to coordinates mapping
+  const zipCoords = {
+    '73301': [29.76, -98.30], // Austin, TX
+    '75201': [32.78, -96.80], // Dallas, TX
+    '77001': [29.77, -95.38], // Houston, TX
+    '80201': [39.74, -104.99], // Denver, CO
+    '33101': [25.76, -80.19], // Miami, FL
+    '32801': [28.54, -81.38], // Orlando, FL
+    '60601': [41.88, -87.63], // Chicago, IL
+    '10001': [40.75, -73.99], // New York, NY
+    '90210': [34.09, -118.40], // Beverly Hills, CA
+    '98101': [47.61, -122.33], // Seattle, WA
+  };
+  
+  const [zipLat, zipLng] = zipCoords[zip] || [39.83, -98.58]; // Default to center of US
+  return haversineDistance(zipLat, zipLng, lat, lng);
+}
+
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  const R = 3959; // Earth radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+function calculateDynamicScore(storm) {
+  const baseScore = storm.score || 0;
+  const ageHours = (Date.now() - new Date(storm.time).getTime()) / 3600000;
+  const recencyBonus = Math.max(0, 100 - ageHours * 2); // Decay over time
+  return baseScore + recencyBonus;
+}
+
+function clearFilters() {
+  ['filter-state','filter-region','filter-zip','filter-wind','filter-severity'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('filter-hail').value = '0';
+  document.getElementById('filter-time').value = '24';
+  State.filteredStorms = [...State.storms];
+  renderStormList(); renderMapMarkers(); updateStats();
+  showToast('Filters cleared.', 'info');
+}
+
+// ── ENHANCED CSV EXPORT ───────────────────────────
+function exportLeadsCSV(leads, filename) {
+  if (!leads.length) { showToast('No leads to export.', 'error'); return; }
+  
+  const headers = ['Business Name', 'Category', 'Contact Person', 'Phone', 'Email', 'Address', 'Rating', 'Reviews', 'Distance (mi)', 'Storm ID', 'Source', 'Saved Date'];
+  const rows = leads.map(l => [
+    l.name,
+    l.category,
+    l.contact || '—',
+    l.phone || '—',
+    l.email || '—',
+    `"${l.address}"`,
+    l.rating || '—',
+    l.reviews || 0,
+    l.distance ? l.distance.toFixed(1) : '—',
+    l.stormId || '—',
+    l.source || 'Demo',
+    l.savedAt ? new Date(l.savedAt).toLocaleDateString() : '—'
+  ]);
+  
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { 
+    href: url, 
+    download: filename,
+    style: 'display:none'
+  });
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showToast(`Exported ${leads.length} leads to ${filename}`, 'success');
+}
+
+// ── AUTO-REFRESH FUNCTIONALITY ─────────────────────
+let autoRefreshInterval = null;
+
+function startAutoRefresh() {
+  if (autoRefreshInterval) clearInterval(autoRefreshInterval);
+  
+  autoRefreshInterval = setInterval(async () => {
+    if (State.config.noaaKey && document.visibilityState === 'visible') {
+      try {
+        State.storms = await fetchNOAAWeather();
+        const db = Store.get(DB_KEY) || {};
+        db.storms = State.storms; db.lastFetch = Date.now();
+        Store.set(DB_KEY, db);
+        State.filteredStorms = [...State.storms];
+        finishLoad();
+        showToast('Storm data auto-refreshed', 'info');
+      } catch(e) {
+        console.warn('Auto-refresh failed:', e);
+      }
+    }
+  }, 5 * 60 * 1000); // Refresh every 5 minutes
+}
+
+function stopAutoRefresh() {
+  if (autoRefreshInterval) {
+    clearInterval(autoRefreshInterval);
+    autoRefreshInterval = null;
+  }
+}
+
+// ── TOAST ─────────────────────────────────────
+function showToast(msg, type = 'info') {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = `toast ${type === 'success' ? 'success' : type === 'error' ? 'error' : ''}`;
+  toast.innerHTML = `<i data-lucide="${type==='success'?'check-circle':type==='error'?'alert-circle':'info'}" style="width:14px;height:14px"></i>${msg}`;
+  container.appendChild(toast);
+  lucide.createIcons({ nodes: [toast] });
+  setTimeout(() => toast.remove(), 3500);
+}
+
+// ── UTILS ─────────────────────────────────────
+function timeAgo(iso) {
+  const secs = Math.floor((Date.now() - new Date(iso)) / 1000);
+  if (secs < 60) return `${secs}s ago`;
+  if (secs < 3600) return `${Math.floor(secs/60)}m ago`;
+  if (secs < 86400) return `${Math.floor(secs/3600)}h ago`;
+  return `${Math.floor(secs/86400)}d ago`;
+}
+
+// ── INIT ──────────────────────────────────────
+function init() {
+  // Init map
+  initMap();
+
+  // Populate state filter
+  const stateSel = document.getElementById('filter-state');
+  US_STATES.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s; opt.textContent = s;
+    stateSel.appendChild(opt);
+  });
+
+  // Load storms (from cache or API)
+  const cached = Store.get(DB_KEY);
+  const cacheAge = cached?.lastFetch ? Date.now() - cached.lastFetch : Infinity;
+
+  if (cached?.storms && cacheAge < 300000) { // 5 minutes cache
+    State.storms = cached.storms;
+    finishLoad();
+  } else {
+    setTimeout(async () => {
+      if (State.config.noaaKey) {
+        State.storms = await fetchNOAAWeather();
+        showToast('Loaded real-time weather data from NOAA', 'success');
+      } else {
+        State.storms = mockStormData();
+        showToast('Using demo data. Add NOAA API key in Settings for real data.', 'info');
+      }
+      const db = Store.get(DB_KEY) || {};
+      db.storms = State.storms; db.lastFetch = Date.now();
+      Store.set(DB_KEY, db);
+      finishLoad();
+    }, 900);
+  }
+
+  // Restore saved leads UI
+  renderSavedList();
+
+  // Settings: populate from storage
+  const cfg = State.config;
+  document.getElementById('api-google').value  = cfg.googleKey || '';
+  document.getElementById('api-noaa').value    = cfg.noaaKey   || '';
+  document.getElementById('api-apollo').value  = cfg.apolloKey || '';
+  document.getElementById('api-radius').value  = cfg.radius    || 25;
+
+  // Event Listeners
+  document.getElementById('btn-refresh').addEventListener('click', async () => {
+    Store.del(DB_KEY);
+    if (State.config.noaaKey) {
+      State.storms = await fetchNOAAWeather();
+      showToast('Real-time weather data refreshed.', 'success');
+    } else {
+      State.storms = mockStormData();
+      showToast('Demo data refreshed. Add NOAA API key for real data.', 'info');
+    }
+    const db = {}; db.storms = State.storms; db.lastFetch = Date.now();
+    Store.set(DB_KEY, db);
+    finishLoad();
+  });
+
+  document.getElementById('btn-apply-filters').addEventListener('click', applyFilters);
+  document.getElementById('btn-clear-filters').addEventListener('click', clearFilters);
+
+  document.getElementById('btn-export-leads').addEventListener('click', () =>
+    exportLeadsCSV(State.leads, `leads_${State.selectedStorm?.id || 'all'}_${Date.now()}.csv`));
+  document.getElementById('btn-export-all').addEventListener('click', () =>
+    exportLeadsCSV(State.savedLeads, `saved_leads_${Date.now()}.csv`));
+  document.getElementById('btn-save-all').addEventListener('click', () => {
+    State.leads.forEach(l => { if (!l.saved) saveLead(l); });
+    showToast('All leads saved.', 'success');
+  });
+  document.getElementById('btn-load-leads').addEventListener('click', () => {
+    if (State.selectedStorm) loadLeads(State.selectedStorm);
+  });
+
+  // Tabs
+  document.querySelectorAll('.aside-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.aside-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.panel-section').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(`panel-${tab.dataset.panel}`).classList.add('active');
+    });
+  });
+
+  // Settings modal
+  document.getElementById('btn-settings').addEventListener('click', () =>
+    document.getElementById('settings-modal').classList.add('open'));
+  document.getElementById('btn-close-modal').addEventListener('click', () =>
+    document.getElementById('settings-modal').classList.remove('open'));
+  document.getElementById('btn-cancel-modal').addEventListener('click', () =>
+    document.getElementById('settings-modal').classList.remove('open'));
+  document.getElementById('settings-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+  });
+  document.getElementById('btn-save-settings').addEventListener('click', () => {
+    State.config = {
+      googleKey: document.getElementById('api-google').value.trim(),
+      noaaKey:   document.getElementById('api-noaa').value.trim(),
+      apolloKey: document.getElementById('api-apollo').value.trim(),
+      radius:    parseInt(document.getElementById('api-radius').value) || 25
+    };
+    Store.set(CFG_KEY, State.config);
+    document.getElementById('settings-modal').classList.remove('open');
+    showToast('Settings saved.', 'success');
+    
+    // Restart auto-refresh with new settings
+    if (State.config.noaaKey) {
+      startAutoRefresh();
+    } else {
+      stopAutoRefresh();
+    }
+  });
+
+  // Start auto-refresh if API key is available
+  if (State.config.noaaKey) {
+    startAutoRefresh();
+  }
+  
+  // Handle visibility change for auto-refresh
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopAutoRefresh();
+    } else if (State.config.noaaKey) {
+      startAutoRefresh();
+    }
+  });
+
+  lucide.createIcons();
+}
+
+function finishLoad() {
+  State.filteredStorms = [...State.storms];
+  renderStormList();
+  renderMapMarkers();
+  updateStats();
+  lucide.createIcons();
+}
+
+// ── BOOT ──────────────────────────────────────
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
